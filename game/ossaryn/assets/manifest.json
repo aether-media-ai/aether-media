@@ -1,0 +1,19 @@
+{
+ "files": [
+  "assets/cutscenes/cs01_the_ring_wakes.mp4",
+  "assets/cutscenes/cs01a_ring_wakes_kf.jpg",
+  "assets/cutscenes/cs02_the_unsealed_kf.jpg",
+  "assets/cutscenes/cs03_the_fall.mp4",
+  "assets/cutscenes/cs03_the_fall_kf.jpg",
+  "assets/env/a1_lantern_terrace_plate.jpg",
+  "assets/env/a2_banner_steps_plate.jpg",
+  "assets/env/a3_well_of_descent_plate.jpg",
+  "assets/ui/chapter2_card.jpg",
+  "assets/ui/icons_items.jpg",
+  "assets/ui/icons_spells.jpg",
+  "assets/ui/portrait_bearer.jpg",
+  "assets/ui/portrait_bearer_alt.jpg",
+  "assets/ui/portrait_unsealed.jpg",
+  "assets/ui/title_bg.jpg"
+ ]
+}

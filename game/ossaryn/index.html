@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>The Aether Realms: The Kept Light (vertical slice)</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{ "imports": { "three": "./lib/three.module.js" } }</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="dark"></div>
+<div id="vignette"></div>
+<div id="floaters"></div>
+
+<div id="hud" class="hidden">
+  <div id="area"><div id="areaName"></div><div id="areaSub"></div></div>
+  <div id="quest"><div class="qh">Quest</div><div id="qTitle"></div><div id="qStep"></div></div>
+  <div id="bossbar" class="hidden"><div id="bossPortrait"></div><div class="bb"><div id="bossName">The Unsealed</div><div class="track"><div id="bossFill"></div></div></div></div>
+  <div id="bottom">
+    <div class="orb" id="hpOrb"><div class="fill" id="hpFill"></div><span id="hpTxt"></span></div>
+    <div id="bar">
+      <div id="xp"><div id="xpFill"></div></div>
+      <div id="slots">
+        <div class="slot" data-k="LMB"><div class="ic" id="icAttack"></div><b>LMB</b><i id="cdAttack"></i></div>
+        <div class="slot" data-k="E"><div class="ic" id="icLance"></div><b>RMB/E</b><i id="cdLance"></i></div>
+        <div class="slot" data-k="Q"><div class="ic" id="icFlare"></div><b>Q</b><i id="cdFlare"></i></div>
+        <div class="slot pot" data-k="1"><div class="ic" id="icHpot"></div><b>1</b><span id="nHpot"></span></div>
+        <div class="slot pot" data-k="2"><div class="ic" id="icLpot"></div><b>2</b><span id="nLpot"></span></div>
+        <div class="slot" data-k="I"><div class="ic" id="icBag"></div><b>I</b></div>
+      </div>
+      <div id="lvl"></div>
+    </div>
+    <div class="orb" id="lightOrb"><div class="fill" id="lightFill"></div><span id="lightTxt"></span></div>
+  </div>
+  <div id="hint"></div>
+</div>
+
+<div id="inv" class="hidden">
+  <div class="ph"><span id="heroName"></span>, Lantern-Bearer<button id="invClose">×</button></div>
+  <div id="equip"></div>
+  <div id="stats"></div>
+  <div id="bag"></div>
+  <div class="foot">Click an item to equip. Shift+click to salvage. Hover for details.</div>
+</div>
+<div id="tooltip" class="hidden"></div>
+<div id="dialog" class="hidden"><div id="dlgText"></div><div class="more">click / F to continue</div></div>
+
+<div id="cut" class="hidden">
+  <video id="cutVideo" playsinline preload="auto"></video>
+  <div id="cutStill"></div>
+  <div id="cutText"></div>
+  <div id="cutSkip">Esc / click to skip</div>
+</div>
+<div id="fade"></div>
+
+<div id="title">
+  <div id="titleBg"></div>
+  <div class="tt">
+    <div class="kicker">The Aether Realms</div>
+    <h1>The Kept Light</h1>
+    <div class="sub">Chapter I · Ossaryn</div>
+    <div class="go">Click to begin</div>
+    <div class="keys">Click or WASD to move · Click enemies to strike · RMB/E Wick Lance · Q Lantern Flare · 1/2 Potions · I Inventory · F Interact</div>
+    <div class="ver">vertical slice v0.2</div>
+  </div>
+</div>
+<div id="end" class="hidden"><div class="tt"><div class="kicker">The Aether Realms</div><h1>Chapter II</h1><div class="sub">The Forgotten Depths: to be continued</div><button id="again">Play again</button></div></div>
+<div id="death" class="hidden"><div class="tt"><h1>The light goes out</h1><button id="revive">Rise again</button></div></div>
+<svg id="editor" class="hidden"></svg><div id="edInfo" class="hidden"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
