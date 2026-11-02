@@ -114,16 +114,17 @@ G.markers = [];
 function clearMarkers() { for (const m of G.markers) { if (m.mesh) engine.scene.remove(m.mesh); m.el?.remove(); } G.markers = []; }
 function addLanternMarker(post) {
   const grp = new THREE.Group(); grp.position.copy(post.pos);
-  const ring = makeRing(0xffb24a, 0.75, 1.05, 0.6); grp.add(ring);
+  const ring = makeRing(0xffb24a, 0.75, 1.05, 0.6); grp.add(ring); onTop(grp);
   const orb = makeOrb(0xffd27a, 0.13); orb.position.y = 3.0; grp.add(orb);
   engine.scene.add(grp);
   const el = document.createElement('div'); el.className = 'wlabel lant'; el.textContent = 'Unlit lantern'; $('wlabels').appendChild(el);
   const m = { kind: 'lantern', post, mesh: grp, ring, orb, el, y: 3.4 }; post.marker = m; G.markers.push(m);
 }
+function onTop(grp) { grp.renderOrder = 30; grp.traverse(o => { o.renderOrder = 30; if (o.material) { o.material = o.material.clone(); o.material.depthTest = false; } }); } // beacons draw over painted occluders (a1 railing)
 function removeMarker(m) { if (!m) return; engine.scene.remove(m.mesh); m.el?.remove(); G.markers.splice(G.markers.indexOf(m), 1); }
 function addExitMarker(ex) {
   const grp = new THREE.Group(); const c = pg(ex.at); grp.position.copy(c);
-  const r = Math.max(1.2, ex.r / 64); const ring = makeRing(0x9fe8d8, r * 0.8, r, 0.5); grp.add(ring);
+  const r = Math.max(1.2, ex.r / 64); const ring = makeRing(0x9fe8d8, r * 0.8, r, 0.5); grp.add(ring); onTop(grp);
   const orb = makeOrb(0x9fe8d8, 0.12); orb.position.y = 2.2; grp.add(orb);
   engine.scene.add(grp);
   const el = document.createElement('div'); el.className = 'wlabel exit'; $('wlabels').appendChild(el);
@@ -306,7 +307,10 @@ function strike(e, toP, dist) {
 function updateBoss(e, dt, toP, dist) {
   const d = e.d, body = e.mesh.userData.body, gate = e.mesh.userData.gate;
   const frac = e.hp / e.maxHp; $('bossFill').style.width = (Math.max(0, frac) * 100) + '%';
-  if (e.phase === 0 && frac < 0.66 || e.phase === 1 && frac < 0.33) { e.phase++; for (let i = 0; i < 4; i++) { const p = e.pos.clone().add(V(rand(-3, 3), 0, rand(-3, 3))); if (walkable(p)) spawnEnemy('dustling', p).aggroed = true; } hint('The Unsealed calls up the dust', 2); }
+  if (e.phase === 0 && frac < 0.66 || e.phase === 1 && frac < 0.33) { e.phase++; for (let i = 0; i < 4; i++) { const p = e.pos.clone().add(V(rand(-3, 3), 0, rand(-3, 3))); if (walkable(p)) spawnEnemy('dustling', p).aggroed = true; } hint('The Unsealed calls up the dust', 2);
+    // mercy drop: a Rust Draught (and Lamp Oil on the second phase) rolls out on reachable floor near the player
+    for (const kind of e.phase === 1 ? ['hp'] : ['hp', 'lp']) { const off = V(rand(-2, 2), 0, rand(-2, 2)), at = P.pos.clone().add(off); const [px, py] = engine.g2p(at), n = nearestWalkable(G.nav, px, py, G.navComp); dropPotion(n ? pg(n) : P.pos.clone(), kind); }
+    floater(P.pos.clone().setY(2.2), 'A draught spills from the dust', '#ffd38a', 16); }
   if (e.state === 'slamWind' || e.state === 'bladeWind') {
     e.wind -= dt; const k = 1 - e.wind / e.windMax;
     if (e.tele) e.tele.material.opacity = 0.15 + k * 0.5;
@@ -315,7 +319,7 @@ function updateBoss(e, dt, toP, dist) {
       if (e.state === 'slamWind') { if (dist < d.slam) hurtPlayer(rand(...d.dmg)); engine.shake = 0.9; sfx('slam'); }
       else { // narrow cold blade along facing
         const f = V(Math.sin(e.facing), 0, Math.cos(e.facing)), rel = flat(P.pos).sub(e.pos), along = rel.dot(f), side = Math.abs(rel.x * f.z - rel.z * f.x);
-        if (along > 0 && along < 14 && side < 0.9) hurtPlayer(rand(24, 32)); sfx('blade'); engine.shake = 0.6;
+        if (along > 0 && along < 14 && side < 0.9) hurtPlayer(rand(17, 22)); sfx('blade'); engine.shake = 0.6;
         const b = makeBeam(0xffffff, 14, 0.5); b.material.opacity = 0.9; b.position.copy(e.pos).addScaledVector(f, 7).setY(0.3); b.rotation.y = e.facing; engine.scene.add(b); G.fx.push({ mesh: b, t: 0, life: 0.35, fadeOnly: true });
       }
       if (e.tele) { engine.scene.remove(e.tele); e.tele = null; } e.state = 'chase'; e.cd = d.cd; if (gate) { gate.l.position.x = -0.2; gate.r.position.x = 0.2; }
@@ -664,6 +668,7 @@ let transitioning = false;
 async function transition(to, spawn) {
   if (transitioning) return; transitioning = true; G.mode = 'cut';
   $('fade').style.opacity = 1; await wait(750);
+  if (G.dialog) { G.dialog = null; $('dialog').classList.add('hidden'); }
   await loadLevel(to, spawn);
   $('fade').style.opacity = 0; G.mode = 'play'; transitioning = false;
 }

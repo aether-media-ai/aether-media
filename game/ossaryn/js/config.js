@@ -71,7 +71,8 @@ export const ENEMIES = {
   wick: { name: 'Pale Wick', hp: 30, speed: 2.4, dmg: [5, 7], range: 7.5, windup: 0.7, cd: 2.2, aggro: 11, xp: 11, ranged: true, keep: 5.5, scale: 0.9 },
   stepwalker: { name: 'Stepwalker', hp: 95, speed: 1.6, dmg: [11, 15], range: 1.9, windup: 0.9, cd: 2.4, aggro: 8, xp: 26, slam: 2.4, scale: 1.25 },
   rift: { name: 'Seam Rift', hp: 70, speed: 0, dmg: [0, 0], range: 0, windup: 0, cd: 5.5, aggro: 10, xp: 20, spawner: true, scale: 1 },
-  unsealed: { name: 'The Unsealed', hp: 520, speed: 1.4, dmg: [16, 22], range: 2.4, windup: 1.0, cd: 2.0, aggro: 14, xp: 160, boss: true, slam: 3.2, scale: 2.2 },
+  unsealed: { name: 'The Unsealed', hp: 520, speed: 1.4, dmg: [11, 15], // -30% after playtest (v0.3.1)
+    range: 2.4, windup: 1.0, cd: 2.0, aggro: 14, xp: 160, boss: true, slam: 3.2, scale: 2.2 },
 };
 
 // Levels. All coordinates are in plate pixels (0..PLATE_W, 0..PLATE_H), traced on the real plates.

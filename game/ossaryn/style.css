@@ -102,3 +102,5 @@ h1{font-family:Cinzel;font-weight:400;font-size:64px;letter-spacing:.08em;color:
 .wlabel.exit.locked{color:#d9a397;border-color:rgba(200,110,90,.4)}
 .wlabel.hov{transform:translate(-50%,-100%) scale(1.15);background:rgba(30,22,10,.85)}
 #prompt{position:fixed;transform:translate(-50%,-100%);margin-top:-30px;pointer-events:none;font:600 16px Cinzel,serif;color:#fff1d2;background:rgba(20,14,8,.88);border:1px solid #c9a46a;padding:4px 12px;white-space:nowrap;box-shadow:0 0 18px rgba(255,170,70,.35);z-index:5}
+/* v0.3.1: hints sit under the area title (never on top of world labels near the HUD) */
+#hint{bottom:auto;top:112px;z-index:6;background:rgba(10,8,6,.6);padding:3px 14px;border-radius:2px;white-space:nowrap}
