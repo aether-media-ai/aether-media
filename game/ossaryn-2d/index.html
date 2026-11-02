@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Aether Realms: The Kept Light (2D side-scroller concept)</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="side.css">
+<script type="importmap">{ "imports": { "three": "./lib/three.module.js", "three/addons/": "./lib/addons/" } }</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="hud" class="hidden">
+  <div id="obj"><div class="h" id="objH">Chapter I · Ossaryn</div><div id="objText"></div></div>
+  <div id="area"></div>
+  <div id="prompt" class="hidden"></div>
+  <div id="sub"></div>
+  <div id="hint"></div>
+  <div id="toast"></div>
+  <div id="gearToast"><div class="k">New gear</div><div class="n" id="gearName"></div><div class="d" id="gearDesc"></div></div>
+  <div id="memory"><div id="memLines"></div></div>
+  <div id="stats">
+    <div id="portrait"></div>
+    <div class="bars">
+      <div class="bar hp"><div id="hpFill"></div><span>Life</span></div>
+      <div class="bar oil"><div id="oilFill"></div><span>Lamp oil</span></div>
+    </div>
+    <div class="pots">
+      <div class="pot"><i class="ic heal"></i><b>1</b><span id="nHeal"></span></div>
+      <div class="pot"><i class="ic oilp"></i><b>2</b><span id="nOil"></span></div>
+      <div class="pot"><i class="ic flare"></i><b>K</b><span id="cdFlare"></span></div>
+    </div>
+  </div>
+  <div id="fps" class="hidden"></div>
+</div>
+<div id="inv" class="hidden">
+  <div class="panel">
+    <div class="kicker">Equipment</div><h2>Nerith, lantern-bearer</h2>
+    <div class="row"><canvas id="invDoll" width="312" height="576"></canvas><div id="slots"></div></div>
+    <div class="foot">Click a slot to switch between owned pieces · <b>I</b> / <b>Esc</b> close</div>
+  </div>
+</div>
+<div id="cut" class="hidden"><video id="cutVideo" playsinline preload="auto"></video><button id="cutSkip">Skip ▸</button></div>
+<div id="card" class="hidden"><div class="lines" id="cardLines"></div><div class="go" id="cardGo">Click to take up the lantern</div></div>
+<div id="fade"></div>
+<div id="title">
+  <div id="titleBg"></div>
+  <div class="tt">
+    <div class="kicker">The Aether Realms</div>
+    <h1>The Kept Light</h1>
+    <div class="sub">2D side-scroller concept · Chapter I: Ossaryn</div>
+    <button id="begin" class="btn">Begin</button>
+    <button id="qualT" class="btn small">Quality: High</button>
+    <div class="keys"><b>A</b>/<b>D</b> or <b>←</b>/<b>→</b> move · <b>Space</b> jump · <b>W</b>/<b>↑</b> climb chains · <b>Shift</b> dodge · <b>E</b> interact<br><b>J</b> / <b>LMB</b> staff combo · <b>K</b> / <b>RMB</b> lantern flare · <b>1</b> Rust Draught · <b>2</b> Lamp Oil · <b>I</b> equipment<br><b>R</b> back to last checkpoint · <b>O</b> quality · <b>F3</b> fps · <b>Esc</b> pause</div>
+    <div class="ver">Openly AI-generated art &amp; video · prototype v0.1</div>
+  </div>
+</div>
+<div id="pause" class="hidden"><div class="tt"><h1>Paused</h1><button id="resume" class="btn">Resume</button><button id="qualP" class="btn small">Quality: High</button></div></div>
+<div id="death" class="hidden"><div class="tt"><h1>The light goes out</h1><div class="sub" id="deathSub">The Drowned drag the flame down…</div><button id="revive" class="btn">Rise again (Enter)</button></div></div>
+<div id="end" class="hidden"><div id="endBg"></div><div class="tt"><div class="kicker">The Aether Realms · The Kept Light</div><h1>Chapter II</h1><div class="sub">The Forgotten Depths</div><div class="stats" id="endStats"></div><button id="again" class="btn">Play again</button></div></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

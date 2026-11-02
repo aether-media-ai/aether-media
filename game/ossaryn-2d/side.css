@@ -1,0 +1,30 @@
+#area { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); font-size: 34px; letter-spacing: .25em; text-transform: uppercase; color: #f1dfbd; text-shadow: 0 0 24px rgba(0,0,0,.9), 0 0 40px rgba(255,170,80,.25); opacity: 0; transition: opacity 1.2s; white-space: nowrap; font-weight: normal; }
+#area.on { opacity: 1; }
+#area small { display: block; font-size: 12px; letter-spacing: .5em; color: #c9a56f; margin-bottom: 6px; text-align: center; }
+#prompt { top: auto; bottom: 30%; }
+#gearToast { position: absolute; left: 50%; top: 26%; transform: translateX(-50%) scale(.96); text-align: center; opacity: 0; transition: opacity .6s, transform .6s; background: radial-gradient(ellipse, rgba(0,0,0,.6), rgba(0,0,0,0) 70%); padding: 18px 60px; }
+#gearToast.on { opacity: 1; transform: translateX(-50%) scale(1); }
+#gearToast .k { font-size: 12px; letter-spacing: .45em; text-transform: uppercase; color: #8fd8cc; }
+#gearToast .n { font-size: 30px; color: #ffe7bf; margin: 6px 0; text-shadow: 0 0 18px rgba(255,170,80,.5); }
+#gearToast .d { font-size: 15px; color: #d7c7a8; font-style: italic; }
+#memory { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 1.4s; pointer-events: none; }
+#memory.on { opacity: 1; }
+#memLines { max-width: 900px; text-align: center; font-size: 26px; line-height: 1.8; color: #f3e3c4; text-shadow: 0 0 18px #000, 0 0 4px #000; }
+#memLines p { opacity: 0; transition: opacity 1.4s; margin: 0 0 10px; }
+#memLines p.on { opacity: 1; }
+#memLines p.q { color: #9fe3d6; font-style: italic; }
+#inv { position: fixed; inset: 0; z-index: 25; display: flex; align-items: center; justify-content: center; background: rgba(4,6,7,.78); }
+#inv .panel { background: linear-gradient(180deg, rgba(30,24,16,.92), rgba(10,10,10,.95)); border: 1px solid #8a6a3e; padding: 22px 30px; min-width: 640px; box-shadow: 0 0 60px rgba(0,0,0,.8); }
+#inv h2 { font-weight: normal; margin: 4px 0 14px; color: #f6e3bf; letter-spacing: .05em; }
+#inv .row { display: flex; gap: 26px; align-items: center; }
+#invDoll { width: 200px; height: 369px; background: radial-gradient(ellipse at 40% 60%, rgba(255,170,80,.18), rgba(0,0,0,0) 65%); }
+#slots { display: grid; grid-template-columns: 1fr; gap: 10px; min-width: 360px; }
+.slot { display: flex; align-items: center; gap: 12px; border: 1px solid rgba(185,138,78,.5); background: rgba(0,0,0,.4); padding: 8px 12px; cursor: pointer; pointer-events: auto; }
+.slot:hover { border-color: #ffd08a; }
+.slot .ico { width: 54px; height: 54px; background-color: #120f0b; background-repeat: no-repeat; border: 1px solid rgba(185,138,78,.35); }
+.slot .s { font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: #c9a56f; }
+.slot .n { font-size: 17px; color: #f3e5c8; }
+.slot .n.new { color: #9fe3d6; }
+.slot .o { font-size: 12px; color: #9c8c74; }
+#inv .foot { margin-top: 14px; font-size: 13px; color: #b6a585; }
+#inv .foot b { color: #ffd08a; font-weight: normal; border: 1px solid rgba(255,208,138,.35); padding: 0 5px; border-radius: 3px; }
