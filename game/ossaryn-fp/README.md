@@ -61,6 +61,14 @@ See `qc/qc_result.json`. The run covers title, cs01 skip, card, play, every obje
 - prompt checks at about 1.6–2.1 m while aiming at each interactable,
 - a second session that walks the Shift+N debug path.
 
+Latest run (r4, 960×540 Low, SwiftShader ~4–7 fps): **full playthrough to the end card**. All 3 lanterns lit, shard taken, 11 Drowned destroyed, 0 deaths. All 6 prompt checks passed, every wall/parapet/rail probe was OK (gap 0.3–0.47 m), K unstick worked, Shift+N worked, and there were 0 console errors. One bot-navigation timeout remains on the curved bridge crest walking to L3, but the lantern still prompted and lit from 2.9 m, so it is not a blocker. Contact sheet: `qc/qc_sheet_r4.jpg`.
+
+Anti-softlock measures:
+- Enemies try detour angles around obstacles.
+- A Drowned that cannot get closer for 5 s re-emerges at its landing spot; on a second failure it dissolves (it counts as a kill).
+- Head-on contact with round obstacles slides along the tangent.
+- The earlier 'invisible wall near the shard' flag was a bot false positive: short W taps were not registering at 4 fps. A real-input walk at (84–85.4, −64.5/−65) reaches the pedestal at x≈87.5. The shard pickup radius is 4.2 m.
+
 ## Known weaknesses (honest)
 - **Performance is unverified on a real GPU.** The box only has a software renderer (SwiftShader). There the game runs about 7 fps at 960×540 Low and about 1–4 fps at 720p High. The design targets 60 fps on a normal GPU:
   - about 10 point lights,
