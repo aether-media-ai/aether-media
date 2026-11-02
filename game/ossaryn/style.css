@@ -91,3 +91,6 @@ h1{font-family:Cinzel;font-weight:400;font-size:64px;letter-spacing:.08em;color:
 #title.art .keys{opacity:.9;color:#e8dcc2}
 #title.art::before{z-index:1}
 #title.art .tt{z-index:2}
+/* keep cutscene captions legible through the white dip in cs03 */
+#cutText{background:linear-gradient(90deg,rgba(0,0,0,0),rgba(8,6,4,.55) 25%,rgba(8,6,4,.55) 75%,rgba(0,0,0,0));padding:12px 10%;color:#f3e6c8}
+#cutSkip{text-shadow:0 0 4px #000}
