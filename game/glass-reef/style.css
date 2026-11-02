@@ -28,11 +28,11 @@ h2{font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:400;font
   font-family:Cinzel,serif;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 #buttons button{width:38px;height:38px;font-size:17px;line-height:1}
 #buttons button.off{opacity:.45;text-decoration:line-through}
-#lore{position:absolute;left:50%;top:17%;transform:translateX(-50%);width:min(860px,86%);text-align:center;font-style:italic;
+#lore{position:absolute;left:50%;top:19%;transform:translateX(-50%);width:min(860px,86%);text-align:center;font-style:italic;
   font-size:clamp(17px,2.3vw,30px);line-height:1.35;color:#f2f4ff;opacity:0;transition:opacity 1.4s;pointer-events:none;
   text-shadow:0 0 12px rgba(0,0,10,.95),0 0 28px rgba(60,80,200,.55)}
 #lore.show{opacity:1}
-#hint{position:absolute;top:13%;left:50%;transform:translateX(-50%);font-family:Cinzel,serif;letter-spacing:.2em;font-size:clamp(11px,1.3vw,15px);
+#hint{position:absolute;top:8.5%;left:50%;transform:translateX(-50%);font-family:Cinzel,serif;letter-spacing:.2em;font-size:clamp(11px,1.3vw,15px);
   color:#ffdcae;opacity:0;transition:opacity 1.2s;pointer-events:none;text-shadow:0 0 10px rgba(0,0,0,.9);white-space:nowrap}
 #hint.show{opacity:.85}
 #ending{background:#000;overflow:hidden}
