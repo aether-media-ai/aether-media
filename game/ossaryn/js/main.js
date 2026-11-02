@@ -5,6 +5,7 @@ import { Engine, V, paintPlaceholderPlate, buildGreybox } from './engine.js';
 import { makeHero, makeNPC, makeEnemy, makeLanternPost, lightLantern, makeLoot, makeRing, makeOrb, makeBeam } from './meshes.js';
 import { makeItem, echoShard, describe } from './items.js';
 import { sfx, startAmbience } from './audio.js';
+import { buildNav, findPath, nearestWalkable, compAt, gdist, RANGE, walkableP } from './nav.js';
 
 const $ = id => document.getElementById(id);
 const engine = new Engine($('gl'));
@@ -58,10 +59,7 @@ function startingGear() {
 
 // ---------------- geometry helpers ----------------
 function pip(x, y, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
-function walkable(Gp) {
-  const [x, y] = engine.g2p(Gp), L = G.L;
-  return L.walk.some(p => pip(x, y, p)) && !(L.blockers || []).some(p => pip(x, y, p));
-}
+function walkable(Gp) { const [x, y] = engine.g2p(Gp); return walkableP(G.L, x, y); }
 function tryMove(pos, dx, dz) {
   const n = V(pos.x + dx, 0, pos.z + dz);
   if (walkable(n)) { pos.copy(n); return true; }
@@ -84,11 +82,19 @@ async function loadLevel(id, spawnPlate) {
   else { engine.setPlate(paintPlaceholderPlate(engine, L), []); buildGreybox(engine, L); }
   engine.setLights(L.light);
   P.pos.copy(pg(spawnPlate || L.spawn)); P.moveTo = null; P.target = null; P.interact = null;
+  G.nav = buildNav(L); P.path = null; P.stuckT = 0;
+  { const [sx, sy] = L.spawn, s = nearestWalkable(G.nav, sx, sy); G.navComp = s ? compAt(G.nav, s[0], s[1]) : -1; }
+  { const [px, py] = engine.g2p(P.pos); if (!walkableP(L, px, py)) { const n = nearestWalkable(G.nav, px, py, G.navComp); if (n) P.pos.copy(pg(n)); } }
   engine.follow(P.pos, 0, true); G.exitArmed = false;
+  // softlock guard: anything the player must reach is pulled onto reachable floor if the trace drifted
+  const reachable = (xy, range) => { const n = nearestWalkable(G.nav, xy[0], xy[1], G.navComp, 1400); if (!n) return xy; if (n[2] <= range) return xy; console.warn('[nav] moved unreachable objective', L.name, xy, '->', n); return [n[0], n[1]]; };
+  G.fixed = { lanterns: (L.lanterns || []).map(xy => reachable(xy, RANGE.lantern - 0.6)), rifts: (L.rifts || []).map(xy => reachable(xy, RANGE.rift - 0.4)), npcs: (L.npcs || []).map(n => reachable(n.at, RANGE.npc - 0.6)), exits: (L.exits || []).map(e => ({ ...e, at: reachable(e.at, 0.5) })) };
+  clearMarkers();
   // lanterns (q1)
-  (L.lanterns || []).forEach((xy, i) => { const m = makeLanternPost(); m.position.copy(pg(xy)); engine.levelGroup.add(m); const post = { mesh: m, pos: m.position.clone(), lit: G.quests.q1.n > i || G.quests.q1.done, kind: 'lantern', i }; if (post.lit) lightLantern(m); G.posts.push(post); });
-  for (const n of L.npcs || []) { const m = makeNPC(); m.position.copy(pg(n.at)); m.rotation.y = 0.8; engine.levelGroup.add(m); G.npcs.push({ ...n, mesh: m, pos: m.position.clone() }); }
-  for (const xy of L.rifts || []) if (!(G.quests.q2.done)) spawnEnemy('rift', pg(xy));
+  G.fixed.lanterns.forEach((xy, i) => { const m = makeLanternPost(); m.position.copy(pg(xy)); engine.levelGroup.add(m); const post = { mesh: m, pos: m.position.clone(), lit: G.quests.q1.n > i || G.quests.q1.done, kind: 'lantern', i }; if (post.lit) lightLantern(m); else addLanternMarker(post); G.posts.push(post); });
+  for (const [ni, n] of (L.npcs || []).entries()) { const m = makeNPC(); m.position.copy(pg(G.fixed.npcs[ni])); m.rotation.y = 0.8; engine.levelGroup.add(m); G.npcs.push({ ...n, mesh: m, pos: m.position.clone() }); }
+  for (const xy of G.fixed.rifts) if (!(G.quests.q2.done)) spawnEnemy('rift', pg(xy));
+  for (const ex of G.fixed.exits) addExitMarker(ex);
   for (const pk of L.packs || []) {
     if ((id === 'a2' && G.quests.q2.done) || (id === 'a3' && G.bossDead)) continue;
     const c = pg(pk.at);
@@ -101,6 +107,72 @@ async function loadLevel(id, spawnPlate) {
   } else { G.wellPos = null; G.wellRing = null; }
   showArea(L.name, L.sub);
   updateQuestUI();
+}
+
+// ---------------- markers (lantern beacons, exit rings) ----------------
+G.markers = [];
+function clearMarkers() { for (const m of G.markers) { if (m.mesh) engine.scene.remove(m.mesh); m.el?.remove(); } G.markers = []; }
+function addLanternMarker(post) {
+  const grp = new THREE.Group(); grp.position.copy(post.pos);
+  const ring = makeRing(0xffb24a, 0.75, 1.05, 0.6); grp.add(ring);
+  const orb = makeOrb(0xffd27a, 0.13); orb.position.y = 3.0; grp.add(orb);
+  engine.scene.add(grp);
+  const el = document.createElement('div'); el.className = 'wlabel lant'; el.textContent = 'Unlit lantern'; $('wlabels').appendChild(el);
+  const m = { kind: 'lantern', post, mesh: grp, ring, orb, el, y: 3.4 }; post.marker = m; G.markers.push(m);
+}
+function removeMarker(m) { if (!m) return; engine.scene.remove(m.mesh); m.el?.remove(); G.markers.splice(G.markers.indexOf(m), 1); }
+function addExitMarker(ex) {
+  const grp = new THREE.Group(); const c = pg(ex.at); grp.position.copy(c);
+  const r = Math.max(1.2, ex.r / 64); const ring = makeRing(0x9fe8d8, r * 0.8, r, 0.5); grp.add(ring);
+  const orb = makeOrb(0x9fe8d8, 0.12); orb.position.y = 2.2; grp.add(orb);
+  engine.scene.add(grp);
+  const el = document.createElement('div'); el.className = 'wlabel exit'; $('wlabels').appendChild(el);
+  G.markers.push({ kind: 'exit', ex, mesh: grp, ring, orb, el, y: 2.6, pos: c });
+}
+function updateMarkers() {
+  for (const m of G.markers) {
+    const hov = G.hover && (G.hover === m.post || G.hover.ex === m.ex && m.ex);
+    const pulse = 0.5 + 0.5 * Math.sin(G.time * 3.2);
+    m.ring.scale.setScalar(hov ? 1.25 : 1 + pulse * 0.12); m.orb.position.y = m.y - 0.4 + Math.sin(G.time * 2.4) * 0.15;
+    if (m.kind === 'exit') {
+      const open = !m.ex.needs || G.quests[m.ex.needs].done;
+      m.ring.material.color.setHex(open ? 0x9fe8d8 : 0xb05040); m.ring.material.opacity = open ? 0.35 + pulse * 0.3 : 0.25;
+      m.el.textContent = (open ? '→ ' : '✕ ') + LEVELS[m.ex.to].name + (open ? '' : ' (sealed)'); m.el.classList.toggle('locked', !open);
+    } else m.ring.material.opacity = hov ? 0.95 : 0.4 + pulse * 0.4;
+    const [x, y] = engine.g2s(m.mesh.position.clone().setY(m.y)); m.el.style.left = x + 'px'; m.el.style.top = y + 'px'; m.el.classList.toggle('hov', !!hov);
+  }
+}
+// ---------------- navigation (A* on a plate-space grid, see nav.js) ----------------
+function goTo(Gp, obj = null) {
+  const [ax, ay] = engine.g2p(P.pos), [bx, by] = engine.g2p(Gp);
+  const path = findPath(G.nav, ax, ay, bx, by);
+  P.interact = obj; P.target = null; P.stuckT = 0;
+  if (!path) { P.path = null; P.moveTo = null; if (obj) tryReachInteract(obj, true); return false; }
+  P.path = path.map(pg); P.moveTo = P.path[P.path.length - 1]; return true;
+}
+function interactRange(o) {
+  if (o.kind === 'lantern') return RANGE.lantern; if (o.kind === 'well') return G.wellRad + 0.3; if (o.kind === 'exit') return o.ex.r / 64 + RANGE.exit;
+  if (o.id) return RANGE.npc; return 1.6;
+}
+function tryReachInteract(o, final) {
+  const d = flat(o.pos).distanceTo(P.pos);
+  if (d <= interactRange(o) + (final ? 1.2 : 0)) { if (o.kind !== 'exit') doInteract(o); return true; }
+  if (final) hint("Can't reach that from here. Press K if you're stuck.", 2);
+  return false;
+}
+function unstuck() {
+  const [px, py] = engine.g2p(P.pos);
+  const n = nearestWalkable(G.nav, px, py, G.navComp);
+  if (n && n[2] > 0.05) P.pos.copy(pg(n)); else P.pos.copy(pg(G.L.spawn));
+  P.path = null; P.moveTo = null; P.interact = null; P.target = null; P.jumping = null;
+  if (G.dialog) { G.dialog = null; $('dialog').classList.add('hidden'); }
+  hint('Unstuck', 1.2);
+}
+function skipArea() { // debug: Shift+N
+  const q = G.quests;
+  if (G.level === 'a1') { for (const p of G.posts) if (!p.lit) { p.lit = true; lightLantern(p.mesh); removeMarker(p.marker); } q.q1.n = 3; checkQuests(); transition('a2', LEVELS.a1.exits[0].spawn); }
+  else if (G.level === 'a2') { for (const e of G.enemies) if (e.kind === 'rift' && !e.dead) { e.hp = 1; damageEnemy(e, 999); } q.q2.n = Math.max(q.q2.n, 2); checkQuests(); transition('a3', LEVELS.a2.exits[0].spawn); }
+  else if (G.level === 'a3') { if (!G.bossDead) { G.bossSpawned = true; G.bossDead = true; for (const e of G.enemies) if (!e.dead && e.kind === 'unsealed') damageEnemy(e, 1e6); q.q3.n = 1; checkQuests(); } jump(); }
 }
 
 // ---------------- entities ----------------
@@ -273,7 +345,7 @@ function updateQuestUI() {
 }
 function doInteract(o) {
   if (o.kind === 'lantern' && !o.lit) {
-    o.lit = true; lightLantern(o.mesh); G.quests.q1.n++; sfx('light'); floater(o.pos.clone().setY(2.6), 'Relit', '#ffd38a', 20);
+    o.lit = true; lightLantern(o.mesh); removeMarker(o.marker); G.quests.q1.n++; sfx('light'); floater(o.pos.clone().setY(2.6), 'Relit', '#ffd38a', 20);
     if (G.quests.q1.n === 2) for (let i = 0; i < 3; i++) { const p = o.pos.clone().add(V(rand(-4, 4), 0, rand(-3, 3))); if (walkable(p)) spawnEnemy('dustling', p).aggroed = true; }
     checkQuests();
   } else if (o.id === 'teyth') { say(G.quests.q1.done ? DIALOGUE.teythDone : DIALOGUE.teyth); }
@@ -407,14 +479,23 @@ function pickEnemy(sx, sy) {
   for (const e of G.enemies) { if (e.dead) continue; const h = e.kind === 'unsealed' ? 2.2 : e.kind === 'rift' ? 0.2 : e.kind === 'stepwalker' ? 1.0 : 0.6; const [x, y] = engine.g2s(e.pos.clone().setY(h)); const d = Math.hypot(x - sx, y - sy); const rad = 34 * (e.kind === 'unsealed' ? 2.5 : e.kind === 'stepwalker' ? 1.6 : 1); if (d < rad && d < bd) { bd = d; best = e; } }
   return best;
 }
+function pickInteractScreen(sx, sy) { // screen-space, generous: the whole lantern post / NPC body is a target
+  let best = null, bd = 1e9;
+  const seg = (o, h0, h1, rad) => { const [ax, ay] = engine.g2s(o.pos.clone().setY(h0)), [bx, by] = engine.g2s(o.pos.clone().setY(h1)); const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((sx - ax) * vx + (sy - ay) * vy) / (vx * vx + vy * vy || 1))); const d = Math.hypot(sx - ax - vx * t, sy - ay - vy * t); if (d < rad && d < bd) { bd = d; best = o; } };
+  for (const p of G.posts) if (!p.lit) seg(p, 0, 3.0, 64);
+  for (const n of G.npcs) seg(n, 0, 1.9, 44);
+  for (const m of G.markers) if (m.kind === 'exit') { const o = { kind: 'exit', ex: m.ex, pos: m.pos }; seg(o, 0, 2.4, 60); }
+  return best ? { o: best, d: bd } : null;
+}
 function pickInteract(Gp) { let best = null, bd = 1e9; for (const o of [...interactables(), ...G.loot]) { const d = flat(o.pos).distanceTo(Gp); if (d < (o.rad || 1.0) && d < bd) { bd = d; best = o; } } return best; }
 function cursorDir() { const Gp = engine.s2g(G.mouse.x, G.mouse.y); const d = Gp.sub(P.pos); d.y = 0; return d.lengthSq() < 1e-4 ? V(Math.sin(P.facing), 0, Math.cos(P.facing)) : d.normalize(); }
 function onPress(sx, sy) {
   if (G.mode !== 'play' || G.dialog) { if (G.dialog) advanceDialog(); return; }
-  const e = pickEnemy(sx, sy); if (e) { P.target = e; P.moveTo = null; P.interact = null; return; }
-  const Gp = engine.s2g(sx, sy); const o = pickInteract(Gp);
-  if (o) { P.interact = o; P.target = null; P.moveTo = flat(o.pos); return; }
-  P.target = null; P.interact = null; P.moveTo = Gp;
+  const si = pickInteractScreen(sx, sy), e = pickEnemy(sx, sy);
+  if (e && !(si && si.o.kind === 'lantern' && si.d < 40)) { P.target = e; P.moveTo = null; P.path = null; P.interact = null; return; }
+  const Gp = engine.s2g(sx, sy); const o = si ? si.o : pickInteract(Gp);
+  if (o) { if (!tryReachInteract(o, false) || o.kind === 'exit') goTo(flat(o.pos), o.kind === 'exit' ? null : o); return; }
+  goTo(Gp); G.holdT = 0;
 }
 cv.addEventListener('pointerdown', ev => {
   G.mouse.x = ev.clientX; G.mouse.y = ev.clientY;
@@ -422,6 +503,21 @@ cv.addEventListener('pointerdown', ev => {
   G.mouse.down = true; onPress(ev.clientX, ev.clientY);
 });
 addEventListener('pointermove', ev => { G.mouse.x = ev.clientX; G.mouse.y = ev.clientY; if (G.editor) edMove(); });
+function updateHover() {
+  if (G.mode !== 'play') { G.hover = null; cv.style.cursor = ''; $('prompt').classList.add('hidden'); return; }
+  const si = pickInteractScreen(G.mouse.x, G.mouse.y); const e = pickEnemy(G.mouse.x, G.mouse.y);
+  G.hover = si ? si.o : null; cv.style.cursor = si ? 'pointer' : e ? 'crosshair' : '';
+  // prompt: hovered object, else the nearest interactable in range
+  let o = G.hover, near = false;
+  if (!o) { let bd = 1e9; for (const c of interactables()) { if (c.kind === 'well' && !G.quests.q3.done) continue; const d = flat(c.pos).distanceTo(P.pos); if (d <= interactRange(c) + 0.5 && d < bd) { bd = d; o = c; near = true; } } }
+  const pr = $('prompt');
+  if (!o || G.dialog) { pr.classList.add('hidden'); return; }
+  const label = o.kind === 'lantern' ? 'Relight lantern' : o.kind === 'well' ? 'Jump into the well' : o.kind === 'exit' ? 'Go to ' + LEVELS[o.ex.to].name : 'Talk to ' + (o.name || '');
+  const inRange = flat(o.pos).distanceTo(P.pos) <= interactRange(o) + 0.5;
+  pr.textContent = (o.kind === 'exit' ? 'Click: ' : inRange ? 'F / click: ' : 'Click: ') + label;
+  const [x, y] = engine.g2s(o.pos.clone().setY(o.kind === 'lantern' ? 3.6 : o.kind === 'well' ? 0.5 : 2.4));
+  pr.style.left = x + 'px'; pr.style.top = y + 'px'; pr.classList.remove('hidden');
+}
 addEventListener('pointerup', () => { G.mouse.down = false; });
 cv.addEventListener('contextmenu', ev => ev.preventDefault());
 addEventListener('keydown', ev => {
@@ -435,7 +531,9 @@ addEventListener('keydown', ev => {
   else if (k === '1') usePotion('hp'); else if (k === '2') usePotion('lp');
   else if (k === 'i' || k === 'tab') { ev.preventDefault(); toggleInv(); }
   else if (k === 'escape') { toggleInv(false); if (G.dialog) { G.dialog = null; $('dialog').classList.add('hidden'); } }
-  else if (k === 'f') { if (G.dialog) advanceDialog(); else { let best = null, bd = 2.5; for (const o of [...interactables(), ...G.loot]) { const d = flat(o.pos).distanceTo(P.pos); if (d < Math.max(bd, o.rad || 0)) { bd = d; best = o; } } if (best) doInteract(best); } }
+  else if (k === 'f') { if (G.dialog) advanceDialog(); else { let best = null, bd = 1e9; for (const o of [...interactables(), ...G.loot]) { const d = flat(o.pos).distanceTo(P.pos), r = o.item || o.potion ? 2.5 : interactRange(o) + 0.5; if (d <= r && d / r < bd) { bd = d / r; best = o; } } if (best) doInteract(best); else hint('Nothing to use here', 1); } }
+  else if (k === 'k') unstuck();
+  else if (k === 'n' && ev.shiftKey) skipArea();
 });
 addEventListener('keyup', ev => { G.keys[ev.key.toLowerCase()] = false; });
 $('dialog').onclick = advanceDialog;
@@ -475,20 +573,28 @@ function update(dt) {
     // WASD (camera-relative)
     const fw = V(-engine.u.x, 0, -engine.u.z).normalize().negate(), rt = V(engine.r.x, 0, engine.r.z).normalize();
     const mv = V(); if (G.keys.w || G.keys.arrowup) mv.add(fw); if (G.keys.s || G.keys.arrowdown) mv.sub(fw); if (G.keys.d || G.keys.arrowright) mv.add(rt); if (G.keys.a || G.keys.arrowleft) mv.sub(rt);
-    if (G.mouse.down && !P.target && !P.interact && !G.dialog) P.moveTo = engine.s2g(G.mouse.x, G.mouse.y);
+    if (G.mouse.down && !P.target && !P.interact && !G.dialog && (G.holdT = (G.holdT || 0) + dt) > 0.2) { G.holdT = 0; goTo(engine.s2g(G.mouse.x, G.mouse.y)); }
     let moving = false;
-    if (mv.lengthSq() > 0) { mv.normalize(); P.moveTo = null; P.target = null; P.interact = null; tryMove(P.pos, mv.x * s.speed * dt, mv.z * s.speed * dt); P.facing = Math.atan2(mv.x, mv.z); moving = true; }
+    if (mv.lengthSq() > 0) { mv.normalize(); P.moveTo = null; P.path = null; P.target = null; P.interact = null; tryMove(P.pos, mv.x * s.speed * dt, mv.z * s.speed * dt); P.facing = Math.atan2(mv.x, mv.z); moving = true; }
     else if (P.target) {
       const e = P.target; if (e.dead) P.target = null; else {
         const to = flat(e.pos).sub(P.pos), d = to.length(); to.normalize();
-        if (d > 1.4 + e.r) { tryMove(P.pos, to.x * s.speed * dt, to.z * s.speed * dt); P.facing = Math.atan2(to.x, to.z); moving = true; }
+        if (d > 1.4 + e.r) {
+          if (P.chase && P.chase.length && (P.chaseT -= dt) > 0) { const wp = P.chase[0], t2 = wp.clone().sub(P.pos); t2.y = 0; if (t2.length() < 0.3) P.chase.shift(); else { t2.normalize(); tryMove(P.pos, t2.x * s.speed * dt, t2.z * s.speed * dt); P.facing = Math.atan2(t2.x, t2.z); } }
+          else if (!tryMove(P.pos, to.x * s.speed * dt, to.z * s.speed * dt)) { const [ax, ay] = engine.g2p(P.pos), [bx, by] = engine.g2p(e.pos); const pth = findPath(G.nav, ax, ay, bx, by); P.chase = pth ? pth.map(pg) : null; P.chaseT = 0.8; }
+          else P.facing = Math.atan2(to.x, to.z);
+          moving = true; }
         else { swing(to); if (!G.mouse.down && P.atkT > 0.6 / (s.atkSpd || 1)) {} }
       }
-    } else if (P.moveTo) {
-      const to = P.moveTo.clone().sub(P.pos); to.y = 0; const d = to.length();
-      const reach = P.interact ? Math.max(1.1, (P.interact.rad || 0) - 0.3) : 0.1;
-      if (d > reach) { to.normalize(); const step = Math.min(d, s.speed * dt); if (!tryMove(P.pos, to.x * step, to.z * step)) P.moveTo = null; P.facing = Math.atan2(to.x, to.z); moving = true; }
-      else { P.moveTo = null; if (P.interact) { const o = P.interact; P.interact = null; doInteract(o); } }
+    } else if (P.path && P.path.length) {
+      if (P.interact && flat(P.interact.pos).distanceTo(P.pos) <= interactRange(P.interact) - 0.4) { const o = P.interact; P.interact = null; P.path = null; P.moveTo = null; doInteract(o); }
+      else {
+        const wp = P.path[0], to = wp.clone().sub(P.pos); to.y = 0; const d = to.length();
+        if (d < 0.08) { P.path.shift(); }
+        else { to.normalize(); const step = Math.min(d, s.speed * dt); const before = P.pos.clone(); tryMove(P.pos, to.x * step, to.z * step); P.facing = Math.atan2(to.x, to.z); moving = true;
+          if (before.distanceTo(P.pos) < step * 0.3) { if ((P.stuckT += dt) > 0.35) { P.stuckT = 0; P.repath = (P.repath || 0) + 1; if (P.repath > 3) { P.repath = 0; P.path.shift(); } else goTo(P.moveTo, P.interact); } } else P.stuckT = 0; }
+        if (P.path && !P.path.length) { P.path = null; P.moveTo = null; P.repath = 0; if (P.interact) { const o = P.interact; P.interact = null; tryReachInteract(o, true); } }
+      }
     }
     // auto-pick potions; first-time NPC greeting
     for (const l of [...G.loot]) if (l.potion && flat(l.pos).distanceTo(P.pos) < 0.9) doInteract(l);
@@ -496,7 +602,7 @@ function update(dt) {
     // boss trigger
     if (G.L.boss && !G.bossSpawned && P.pos.distanceTo(pg(G.L.boss.at)) < 10) spawnBoss();
     // exits
-    const inEx = (G.L.exits || []).filter(ex => flat(pg(ex.at)).distanceTo(P.pos) < ex.r / 64 + 0.6);
+    const inEx = (G.fixed.exits || []).filter(ex => flat(pg(ex.at)).distanceTo(P.pos) < ex.r / 64 + RANGE.exit);
     if (!inEx.length) G.exitArmed = true;
     if (G.exitArmed) for (const ex of inEx) {
       if (ex.needs && !G.quests[ex.needs].done) { if (!G.exitHintT || G.time - G.exitHintT > 3) { hint('The way is barred until ' + QUESTS[ex.needs].title.toLowerCase() + ' is done', 2); G.exitHintT = G.time; } }
@@ -544,6 +650,7 @@ function update(dt) {
   for (const l of G.loot) if (l.mesh.userData.beam) l.mesh.userData.beam.material.opacity = 0.3 + Math.sin(G.time * 3 + l.pos.x) * 0.12;
   if (G.wellRing && G.bossDead) G.wellRing.material.opacity = 0.45 + 0.15 * Math.sin(G.time * 2.2);
   engine.follow(P.jumping ? P.jumping.c : P.pos, dt);
+  updateMarkers(); updateHover();
   updateHUD(dt);
   if (G.editor) drawEditor();
 }
@@ -560,8 +667,23 @@ async function transition(to, spawn) {
   await loadLevel(to, spawn);
   $('fade').style.opacity = 0; G.mode = 'play'; transitioning = false;
 }
-$('revive').onclick = () => { $('death').classList.add('hidden'); P.hp = P.st.maxHp; P.light = P.st.maxLight; P.invuln = 2; G.mode = 'play'; P.pos.copy(pg(G.L.spawn)); };
+$('revive').onclick = () => { $('death').classList.add('hidden'); P.hp = P.st.maxHp; P.light = P.st.maxLight; P.invuln = 2; G.mode = 'play'; P.pos.copy(pg(G.L.spawn)); P.path = null; P.target = null; P.interact = null; };
 $('again').onclick = () => location.reload();
+
+// ---------------- read-only probe: where things are on screen (used by the human-like QC to aim clicks) ----------------
+function probe() {
+  const S = (v, h = 0) => engine.g2s(flat(v).setY(h)).map(Math.round);
+  return {
+    mode: G.mode, level: G.level, active: G.active, quests: JSON.parse(JSON.stringify(G.quests)), dialog: !!G.dialog, bossDead: !!G.bossDead,
+    hp: Math.round(P.hp), maxHp: Math.round(P.st.maxHp), lvl: P.lvl, player: S(P.pos, 1), view: [innerWidth, innerHeight],
+    lanterns: G.posts.filter(p => !p.lit).map(p => S(p.pos, 2.0)),
+    npcs: G.npcs.map(n => ({ id: n.id, at: S(n.pos, 1) })),
+    exits: G.markers.filter(m => m.kind === 'exit').map(m => ({ to: m.ex.to, open: !m.ex.needs || G.quests[m.ex.needs].done, at: S(m.pos, 0) })),
+    enemies: G.enemies.filter(e => !e.dead).map(e => ({ kind: e.kind, at: S(e.pos, e.kind === 'unsealed' ? 2.2 : e.kind === 'rift' ? 0.2 : e.kind === 'stepwalker' ? 1.0 : 0.6), dist: +flat(e.pos).distanceTo(P.pos).toFixed(1) })),
+    well: G.wellPos ? { at: S(G.wellPos, 0), rimNear: S(G.wellPos.clone().add(P.pos.clone().sub(G.wellPos).setY(0).normalize().multiplyScalar(G.wellRad - 0.8)), 0) } : null,
+    prompt: $('prompt').classList.contains('hidden') ? null : $('prompt').textContent, cursor: cv.style.cursor,
+  };
+}
 
 // ---------------- boot ----------------
 async function boot() {
@@ -570,6 +692,7 @@ async function boot() {
   await loadLevel('a1');
   $('hud').classList.add('hidden');
   requestAnimationFrame(frame);
+  window.__arpgProbe = probe;
   window.__arpg = { G, P, engine, doInteract, damageEnemy, usePotion, loadLevel, spawnEnemy, dropItem, makeItem, playCutscene, jump, transition, castFlare, castLance, swing, toggleInv, pg, checkQuests, recalc };
   $('title').onclick = async () => {
     $('title').classList.add('hidden'); startAmbience(); G.mode = 'cut';

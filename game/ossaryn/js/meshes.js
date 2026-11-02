@@ -8,7 +8,7 @@ const M = {
   skin: new THREE.MeshStandardMaterial({ color: 0x6a4e3c, roughness: 0.8 }),
   bronze: new THREE.MeshStandardMaterial({ color: 0x7a5a32, roughness: 0.4, metalness: 0.85 }),
   amberGlass: new THREE.MeshStandardMaterial({ color: 0xffc070, emissive: 0xff9a30, emissiveIntensity: 1.6, roughness: 0.3 }),
-  deadGlass: new THREE.MeshStandardMaterial({ color: 0x3a3a38, roughness: 0.3 }),
+  deadGlass: new THREE.MeshStandardMaterial({ color: 0x4a4038, emissive: 0x7a3a10, emissiveIntensity: 0.7, roughness: 0.3 }),
   paleStone: new THREE.MeshStandardMaterial({ color: 0x77716a, roughness: 0.9, metalness: 0.05 }),
   paleStone2: new THREE.MeshStandardMaterial({ color: 0x57524c, roughness: 0.92 }),
   seam: new THREE.MeshStandardMaterial({ color: 0x6a5228, emissive: 0xc89a40, emissiveIntensity: 0.55 }),
@@ -134,7 +134,9 @@ export function makeLanternPost() {
   const g = new THREE.Group(); g.add(shadow(0.3));
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 2.2, 8), M.bronze); pole.position.y = 1.1; g.add(pole);
   const arm = box(0.5, 0.05, 0.05, M.bronze); arm.position.set(0.2, 2.15, 0); g.add(arm);
-  const glass = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), M.deadGlass.clone()); glass.position.set(0.42, 1.95, 0); g.add(glass);
+  const glass = new THREE.Mesh(new THREE.SphereGeometry(0.24, 14, 10), M.deadGlass.clone()); glass.position.set(0.42, 1.9, 0); g.add(glass);
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.16, 8), M.bronze); cap.position.set(0.42, 2.18, 0); g.add(cap);
+  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.14, 8), M.bronze); foot.position.y = 0.07; g.add(foot);
   const light = new THREE.PointLight(0xffa850, 0, 10, 1.5); light.position.set(0.42, 1.95, 0); g.add(light);
   g.userData = { glass, light };
   return g;

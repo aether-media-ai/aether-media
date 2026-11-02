@@ -21,3 +21,9 @@ A static site with no build step. ES modules plus Three.js r187 vendored in `lib
 3. Reload the game.
 4. Press **F2** in game. It shows the walk (turquoise), blockers (red) and occluders (yellow) over the plate. Alt+click to trace a new polygon, then paste the printed array into `LEVELS.<id>.walk` (or blockers) in `config.js`.
 5. Occluders: add `{ poly: [[x,y],...], base: <plate y of the object's foot line> }` to `LEVELS.<id>.occluders` for railings or pillars that should cover the player.
+
+## v0.3 — navigation & interaction fixes
+- `js/nav.js`: A* pathfinding on a 16 px plate-space grid (walk polygons minus blockers). Click-to-move paths around obstacles; clicking unwalkable ground walks to the nearest reachable point. Unreachable objectives are pulled onto reachable floor at load (softlock guard).
+- Lanterns: the whole post is a big screen-space click target (hover = pointer cursor, highlight, "Click: Relight lantern" prompt); click from any distance walks there and relights; F relights within 3.2 m. Unlit lanterns have a pulsing ground ring, a beacon and a label. Exits have rings + labels (sealed/open) and trigger by proximity or click.
+- Keys: K = unstuck (snap to reachable floor, clear dialog). Shift+N = debug skip area.
+- QC: `node tools/reach_check.mjs` (reachability from every spawn/arrival point; exit 1 on failure), `python3 tools/overlay_levels.py` (walk/blocker/reachable overlays → qc/nav/), `python qc/human_qc.py [URL] [OUTDIR]` (plays all three areas with real mouse clicks/keys only; reads `window.__arpgProbe()` to aim).
