@@ -1,0 +1,144 @@
+{
+ "issues": [
+  {
+   "kind": "invisible_wall",
+   "msg": "stuck walking to shard (85.6, -65) at [85.46, 0, -64.52] with no visible geometry ahead (ray [14.81, 14.71])",
+   "pos": [
+    85.46,
+    0,
+    -64.52
+   ]
+  }
+ ],
+ "console_errors": [],
+ "final": {
+  "mode": "end",
+  "pos": [
+   79,
+   -29.16,
+   -65
+  ],
+  "yaw": 8.9947,
+  "pitch": -1.449,
+  "hp": 87,
+  "oil": 81,
+  "pots": {
+   "heal": 4,
+   "oil": 3
+  },
+  "lit": [
+   true,
+   true,
+   true
+  ],
+  "shard": true,
+  "wellOpen": true,
+  "objective": "Leap into the Well of Descent",
+  "target": [
+   79,
+   0.6,
+   -65
+  ],
+  "region": "landing",
+  "prompt": null,
+  "locked": false,
+  "noLock": false,
+  "enemies": [],
+  "pickups": [],
+  "lanterns": [
+   {
+    "id": "L1",
+    "pos": [
+     3.3,
+     -16
+    ],
+    "lit": true
+   },
+   {
+    "id": "L2",
+    "pos": [
+     3.3,
+     -46
+    ],
+    "lit": true
+   },
+   {
+    "id": "L3",
+    "pos": [
+     40.5,
+     -63.2
+    ],
+    "lit": true
+   }
+  ],
+  "shardPos": [
+   88.2,
+   -65
+  ],
+  "wellPos": [
+   79,
+   -65
+  ],
+  "fps": 60,
+  "deaths": 0,
+  "kills": 11,
+  "playT": 134,
+  "quality": "low",
+  "cp": [
+   74.5,
+   0,
+   -65
+  ]
+ },
+ "log": [
+  "[    4.1s] shot /workspace/aether/game/fp/qc/shots/00_title.jpg",
+  "[    6.7s] after Begin mode cut",
+  "[    6.8s] shot /workspace/aether/game/fp/qc/shots/01_cs01_playing.jpg",
+  "[    7.7s] after skip mode card",
+  "[   12.2s] shot /workspace/aether/game/fp/qc/shots/02_story_card.jpg",
+  "[   13.1s] play mode play locked True noLock False",
+  "[   14.6s] fps 4 quality low",
+  "[   23.4s] shot /workspace/aether/game/fp/qc/shots/03_start.jpg",
+  "[   43.4s] wall probe west facade wall: stopped at [-3.74, 0, -2.88] gap to visible geometry [0.41, 0.41] -> OK",
+  "[   62.6s] wall probe east parapet: stopped at [3.9, 0, -4.5] gap to visible geometry [0.4, 0.3] -> OK",
+  "[   84.6s] prompt OK for L1 at 1.96 m: 'ERelight the lantern'",
+  "[   87.4s] shot /workspace/aether/game/fp/qc/shots/04_L1_lit.jpg",
+  "[  103.3s] L1 enemies [(1, 'chase', 12.49), (2, 'chase', 16.49)]",
+  "[  107.2s] shot /workspace/aether/game/fp/qc/shots/05_combat_L1.jpg",
+  "[  135.6s] fight done: swings 76, flares 12, hp 100, oil 84, kills 2",
+  "[  144.4s] K unstick OK -> [1.5, 0, -14.5]",
+  "[  173.8s] prompt OK for pickup oil at 2.12 m: 'ETake Lamp Oil'",
+  "[  185.2s] prompt OK for pickup heal at 2.05 m: 'ETake Rust Draught'",
+  "[  185.5s] pots {'heal': 3, 'oil': 3}",
+  "[  214.2s] prompt OK for L2 at 1.82 m: 'ERelight the lantern'",
+  "[  279.4s] fight done: swings 118, flares 0, hp 100, oil 100, kills 5",
+  "[  281.4s] shot /workspace/aether/game/fp/qc/shots/06_after_L2.jpg",
+  "[  322.3s] prompt OK for pickup plaza heal at 2.01 m: 'ETake Rust Draught'",
+  "[  341.8s] shot /workspace/aether/game/fp/qc/shots/07_bridge_view.jpg",
+  "[  362.1s] wall probe bridge rail (south): stopped at [23.61, 1.99, -62.97] gap to visible geometry [0.47, 0.39] -> OK",
+  "[  387.9s] prompt OK for L3 at 1.69 m: 'ERelight the lantern'",
+  "[  665.0s] fight done: swings 40, flares 0, hp 100, oil 100, kills 6",
+  "[  697.8s] fight done: swings 77, flares 0, hp 100, oil 100, kills 8",
+  "[  721.9s] shot /workspace/aether/game/fp/qc/shots/08_bridge_crest_lit.jpg",
+  "[  765.1s] prompt OK for pickup landing oil at 2.37 m: 'ETake Lamp Oil'",
+  "[  788.5s] sealed well prompt: The Well is sealed: take the echo shard from the tower niche",
+  "[  830.2s] ISSUE invisible_wall stuck walking to shard (85.6, -65) at [85.46, 0, -64.52] with no visible geometry ahead (ray [14.81, 14.71]) {'pos': [85.46, 0, -64.52]}",
+  "[  834.9s] prompt OK for shard at 2.01 m: 'ETake the Echo Shard'",
+  "[  883.2s] drink Lamp Oil (2), oil 25",
+  "[  899.1s] fight done: swings 93, flares 101, hp 87, oil 83, kills 11",
+  "[  919.7s] open well prompt at 5 m: ELeap into the Well of Descent",
+  "[  921.6s] shot /workspace/aether/game/fp/qc/shots/09_well_open.jpg",
+  "[  924.5s] mode after walking into the well fall",
+  "[  927.5s] shot /workspace/aether/game/fp/qc/shots/10_falling.jpg",
+  "[  935.7s] shot /workspace/aether/game/fp/qc/shots/11_cs03.jpg",
+  "[  937.8s] shot /workspace/aether/game/fp/qc/shots/12_end_card.jpg",
+  "[  937.8s] END: The Aether Realms \u00b7 The Kept LightChapter IIThe Forgotten DepthsEcho Shard taken: The First NoteLanterns relit: 3/3 \u00b7 Drowned destroyed: 11 \u00b7 Falls: 0Time: 2:13Play again",
+  "[  943.3s] after Begin mode cut",
+  "[  943.3s] shot /workspace/aether/game/fp/qc/shots/13_cs01_playing.jpg",
+  "[  944.3s] after skip mode card",
+  "[  947.9s] shot /workspace/aether/game/fp/qc/shots/14_story_card.jpg",
+  "[  948.7s] play mode play locked True noLock False",
+  "[  953.2s] Shift+N sequence [([True, False, False], False, False, [1.5, 0, -14.5]), ([True, True, False], False, False, [1.5, 0, -44.5]), ([True, True, True], False, False, [38.5, 3.18, -65]), ([True, True, True], True, False, [84, 0, -65]), ([True, True, True], True, True, [74, 0, -65])]",
+  "[  961.6s] debug session mode fall"
+ ]
+}
